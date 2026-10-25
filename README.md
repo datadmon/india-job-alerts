@@ -19,11 +19,12 @@ Every run adds the new jobs to [`data/jobs.csv`](data/jobs.csv), rewrites [`data
 
 Each CSV row has the board, posting date, title, company, locations, experience range, salary in LPA when the employer discloses it, applicant count (IIMJobs, Hirist, Foundit), up to eight skills, the job URL and a stable ID such as `iimjobs:1741760`.
 
-## Set it up in three minutes
+## Set it up in five minutes
 
 1. Click **Use this template → Create a new repository** (public or private, your choice).
 2. Create a free [Apify](https://apify.com) account and copy your API token from **Console → Settings → Integrations**. In your new repository open **Settings → Secrets and variables → Actions → New repository secret**, name it `APIFY_TOKEN` and paste the token.
-3. Edit [`config.json`](config.json) with your searches, then open **Actions → India job alerts → Run workflow** once to test it. From then on it runs every day at 08:00 IST.
+3. Add the workflow: in your repository click **Add file → Create new file**, name it `.github/workflows/job-alerts.yml`, paste the contents of [`setup/job-alerts.yml`](setup/job-alerts.yml) and commit.
+4. Edit [`config.json`](config.json) with your searches, then open **Actions → India job alerts → Run workflow** once to test it. From then on it runs every day at 08:00 IST.
 
 The first run delivers the jobs posted in the last three days (seven for the Instahyre example); every later run delivers only the jobs it has not delivered before.
 

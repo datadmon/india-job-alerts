@@ -1,0 +1,40 @@
+name: India job alerts
+
+on:
+  schedule:
+    - cron: "30 2 * * *" # every day at 08:00 IST; edit to change the time (UTC)
+  workflow_dispatch: # "Run workflow" button for a first test
+
+permissions:
+  contents: write # commit data/ back to your copy
+  issues: write # open the "new jobs" issue (GitHub emails you)
+
+concurrency: job-alerts
+
+jobs:
+  alerts:
+    # The template itself never runs; your copy (created with "Use this template") does.
+    if: github.repository != 'datadmon/india-job-alerts'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch the new jobs
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python job_alerts.py
+      - name: Save them in the repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || git commit -m "New jobs $(date -u +%F)"
+          git push
