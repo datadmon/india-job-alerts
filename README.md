@@ -117,4 +117,10 @@ Yes. Read `data/jobs.csv` from Google Sheets (`=IMPORTDATA` on the raw file URL 
 - [apify-data-actors-examples](https://github.com/datadmon/apify-data-actors-examples): Python, Node.js, curl and n8n examples for the same Actors.
 - [Daemon Data on Apify](https://apify.com/data_daemon): IIMJobs, Hirist, Foundit, Instahyre, Oracle HCM career sites, India IPO GMP and more as pay-per-result APIs.
 
+## More templates by Daemon Data
+
+- [india-job-alerts](https://github.com/datadmon/india-job-alerts): daily new-job alerts from IIMJobs, Hirist, Foundit and Instahyre.
+- [uk-insolvency-monitor](https://github.com/datadmon/uk-insolvency-monitor): alerts when a watchlist company appears in The Gazette (winding-up petitions, administrations).
+- [india-ipo-gmp-tracker](https://github.com/datadmon/india-ipo-gmp-tracker): daily IPO GMP table, GMP history and Telegram alerts.
+
 Not affiliated with IIMJobs, Hirist, Foundit or Instahyre. Use the data in line with each site's terms.
