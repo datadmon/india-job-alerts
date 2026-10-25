@@ -1,0 +1,47 @@
+{
+  "searches": [
+    {
+      "board": "iimjobs",
+      "keywords": [
+        "product manager"
+      ],
+      "locations": [
+        "Bangalore"
+      ]
+    },
+    {
+      "board": "hirist",
+      "keywords": [
+        "data engineer"
+      ]
+    },
+    {
+      "board": "foundit",
+      "keywords": [
+        "data analyst"
+      ]
+    },
+    {
+      "board": "instahyre",
+      "keywords": [
+        "python"
+      ],
+      "locations": [
+        "Bangalore"
+      ],
+      "postedWithinDays": 7,
+      "maxJobs": 20
+    }
+  ],
+  "defaults": {
+    "postedWithinDays": 3,
+    "maxJobs": 50,
+    "descriptions": false
+  },
+  "maxCostPerSearchUsd": 0.5,
+  "dataDir": "data",
+  "notify": {
+    "githubIssue": true,
+    "maxJobsPerMessage": 20
+  }
+}
