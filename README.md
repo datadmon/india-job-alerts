@@ -115,6 +115,7 @@ Yes. Read `data/jobs.csv` from Google Sheets (`=IMPORTDATA` on the raw file URL 
 ## Related
 
 - [apify-data-actors-examples](https://github.com/datadmon/apify-data-actors-examples): Python, Node.js, curl and n8n examples for the same Actors.
+- [One day of Indian job postings: 5,600 new jobs on five boards, and how many show the salary](https://dev.to/datadaemon/one-day-of-indian-job-postings-5600-new-jobs-on-five-boards-and-how-many-show-the-salary-10nk): daily volumes, salary disclosure and applicant counts on Apna, foundit, IIMJobs, Hirist and Instahyre (28 October 2026).
 - [Daemon Data on Apify](https://apify.com/data_daemon): IIMJobs, Hirist, Foundit, Instahyre, Oracle HCM career sites, India IPO GMP and more as pay-per-result APIs.
 
 ## More templates by Daemon Data
