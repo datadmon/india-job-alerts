@@ -1,8 +1,8 @@
-# India Job Alerts: new IIMJobs, Hirist, Foundit and Instahyre jobs every morning
+# India Job Alerts: new IIMJobs, Hirist, Foundit, Instahyre, Apna, Shine and Unstop jobs every morning
 
-Get the **new jobs** from India's recruiter job boards, **IIMJobs** (MBA, finance, consulting, management), **Hirist.tech** (tech), **Foundit** (formerly Monster India) and **Instahyre** (startups and product companies), every morning as a **GitHub issue, Slack, Discord or Telegram message** and a growing **CSV file**, without writing or maintaining a scraper. You pick the keywords, cities and experience range; a GitHub Actions workflow in your copy of this repository does the rest, and every job reaches you once.
+Get the **new jobs** from India's recruiter job boards, **IIMJobs** (MBA, finance, consulting, management), **Hirist.tech** (tech), **Foundit** (formerly Monster India), **Instahyre** (startups and product companies), **Apna** (entry-level and frontline jobs with salaries), **Shine.com** and **Unstop** (fresher jobs and internships), every morning as a **GitHub issue, Slack, Discord or Telegram message** and a growing **CSV file**, without writing or maintaining a scraper. You pick the keywords, cities and experience range; a GitHub Actions workflow in your copy of this repository does the rest, and every job reaches you once.
 
-It is built for job seekers who follow a few searches, recruiters and staffing agencies tracking new mandates, and anyone building an India job feed. Put `*` as the keyword to follow **every job on a board** (IIMJobs posts about 170 a day, Hirist about 140, Foundit about 2,800).
+It is built for job seekers who follow a few searches, recruiters and staffing agencies tracking new mandates, and anyone building an India job feed. Put `*` as the keyword to follow **every job on a board** (IIMJobs posts about 170 a day, Hirist about 140, Foundit about 2,800, Apna about 2,000).
 
 ![Outputs](https://img.shields.io/badge/output-GitHub%20issue%20%7C%20Slack%20%7C%20Telegram%20%7C%20Discord%20%7C%20CSV-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
@@ -17,7 +17,7 @@ Every run adds the new jobs to [`data/jobs.csv`](data/jobs.csv), rewrites [`data
 | foundit | 2026-10-25 | [Senior Data Analyst](https://www.foundit.in/job/senior-data-analyst-tally-solutions-pvt-ltd-bengaluru-bangalore-india-69558782) | tally solutions pvt ltd | Bengaluru, India | 2-4 yrs |
 | instahyre | 2026-10-19 | [Product Software Engineer II - 476](https://www.instahyre.com/job-447419-product-software-engineer-ii-476-at-amazon-bangalore/) | Amazon | Bangalore | 2-5 yrs |
 
-Each CSV row has the board, posting date, title, company, locations, experience range, salary in LPA when the employer discloses it, applicant count (IIMJobs, Hirist, Foundit), up to eight skills, the job URL and a stable ID such as `iimjobs:1741760`.
+Each CSV row has the board, posting date, title, company, locations, experience range, salary in lakh per year (LPA) when the employer discloses it (Apna and Unstop monthly pay is converted, ×12), applicant count (IIMJobs, Hirist, Foundit), up to eight skills, the job URL and a stable ID such as `iimjobs:1741760`.
 
 ## Set it up in five minutes
 
@@ -46,14 +46,25 @@ The first run delivers the jobs posted in the last three days (seven for the Ins
 
 | Field | What it does |
 |---|---|
-| `board` | `iimjobs`, `hirist`, `foundit` or `instahyre`. |
+| `board` | `iimjobs`, `hirist`, `foundit`, `instahyre`, `apna`, `shine` or `unstop`. |
 | `keywords` | Role or skill words, one board search each. `["*"]` means every job on the board in the window. |
 | `locations` | Optional cities as the board lists them: `Bangalore`, `Mumbai`, `Delhi NCR`, `Gurgaon`, `Pune`, `Hyderabad`, `Chennai`, `Remote`. |
-| `minExperience`, `maxExperience` | Optional experience range in years. |
+| `minExperience`, `maxExperience` | Optional experience range in years. On Shine `minExperience` keeps jobs whose range covers that many years; Apna and Unstop ignore both. |
+| `types` | Unstop only: listing types, default `["jobs", "internships"]` (also `hackathons`, `competitions`). |
 | `postedWithinDays` | Only jobs posted in the last N days (default 3; IIMJobs and Hirist count calendar days in India time). Instahyre has no date filter on the site, so it is not sent there unless you set it; when you do, the Actor reads each job's page to check the date (slower, and skipped jobs are not charged). |
 | `maxJobs` | Cap per search and run (default 50). |
 | `descriptions` | `true` adds the full job description to the Actor output (more expensive on IIMJobs and Hirist until 2 November 2026). |
 | `maxCostPerSearchUsd` | Hard spending cap per search and run; the Actor stops cleanly when it is reached. |
+
+Searches for the other boards (tested on 29 October 2026):
+
+```json
+{"board": "apna", "keywords": ["telecaller"], "locations": ["Mumbai"], "postedWithinDays": 1},
+{"board": "shine", "keywords": ["data analyst"], "locations": ["Bangalore"], "minExperience": 2},
+{"board": "unstop", "keywords": ["marketing"], "postedWithinDays": 7}
+```
+
+Apna only offers 1-, 3- and 7-day windows, so `postedWithinDays` is rounded up to one of them, and its window counts jobs the employer posted **or refreshed** (a refreshed job keeps its original posting date). Apna stores 31 as the maximum experience when the employer set only a minimum; the CSV shows such jobs as `2+ yrs`.
 
 ## Notifications
 
@@ -66,7 +77,7 @@ A channel that fails is reported in the log; the jobs are still saved.
 
 ## What it costs
 
-The searches run on [Apify](https://apify.com) Actors that charge per job saved; there is no subscription, and Apify's free plan includes $5 of usage every month. Prices on 26 October 2026 (free plan):
+The searches run on [Apify](https://apify.com) Actors that charge per job saved; there is no subscription, and Apify's free plan includes $5 of usage every month. Prices on 29 October 2026 (free plan):
 
 | Board | Price |
 |---|---|
@@ -74,6 +85,9 @@ The searches run on [Apify](https://apify.com) Actors that charge per job saved;
 | [Hirist.tech Jobs Scraper](https://apify.com/data_daemon/hirist-jobs-scraper) | same as IIMJobs |
 | [Foundit Jobs Scraper](https://apify.com/data_daemon/foundit-jobs-scraper) | $0.0008 per job, description included, + $0.001 per run |
 | [Instahyre Jobs Scraper](https://apify.com/data_daemon/instahyre-jobs-scraper) | $0.0008 per job, description included, + $0.001 per run |
+| [Apna Jobs Scraper](https://apify.com/data_daemon/apna-jobs-scraper) | $0.0008 per job, description included, + $0.001 per run |
+| [Shine Jobs Scraper](https://apify.com/data_daemon/shine-jobs-scraper) | $0.0008 per job, description included, + $0.001 per run |
+| [Unstop Scraper](https://apify.com/data_daemon/unstop-scraper) | $0.0015 per listing, description included, + $0.001 per run |
 
 The default four searches with about 25 new jobs each per day cost roughly **$0.13 a day, about $4 a month**, inside the free credit. Jobs skipped because you already received them are **never charged**. Check each Actor's pricing tab for current prices.
 
@@ -97,7 +111,7 @@ Python 3.9+ and the standard library only; schedule it with cron or Windows Task
 
 ## FAQ
 
-**Is there an official IIMJobs, Hirist, Foundit or Instahyre API?**
+**Is there an official IIMJobs, Hirist, Foundit, Instahyre, Apna, Shine or Unstop API?**
 No public one. The Actors read the same public JSON the job boards' own websites load, without logins or cookies, and return it as clean rows.
 
 **Can I get the full job description?**
@@ -120,8 +134,8 @@ Yes. Read `data/jobs.csv` from Google Sheets (`=IMPORTDATA` on the raw file URL 
 
 ## More templates by Daemon Data
 
-- [india-job-alerts](https://github.com/datadmon/india-job-alerts): daily new-job alerts from IIMJobs, Hirist, Foundit and Instahyre.
+- [india-job-alerts](https://github.com/datadmon/india-job-alerts): daily new-job alerts from IIMJobs, Hirist, Foundit, Instahyre, Apna, Shine and Unstop.
 - [uk-insolvency-monitor](https://github.com/datadmon/uk-insolvency-monitor): alerts when a watchlist company appears in The Gazette (winding-up petitions, administrations).
 - [india-ipo-gmp-tracker](https://github.com/datadmon/india-ipo-gmp-tracker): daily IPO GMP table, GMP history and Telegram alerts.
 
-Not affiliated with IIMJobs, Hirist, Foundit or Instahyre. Use the data in line with each site's terms.
+Not affiliated with IIMJobs, Hirist, Foundit, Instahyre, Apna, Shine or Unstop. Use the data in line with each site's terms.

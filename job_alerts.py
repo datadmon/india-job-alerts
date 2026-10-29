@@ -1,4 +1,4 @@
-"""India job alerts: the new jobs on IIMJobs, Hirist, Foundit and Instahyre since the last run.
+"""India job alerts: the new jobs on IIMJobs, Hirist, Foundit, Instahyre, Apna, Shine and Unstop since the last run.
 
     export APIFY_TOKEN=...            # https://console.apify.com/settings/integrations
     python job_alerts.py              # reads config.json, writes data/, sends the alerts you configured
@@ -27,6 +27,9 @@ ACTORS = {
     "hirist": "data_daemon~hirist-jobs-scraper",        # https://apify.com/data_daemon/hirist-jobs-scraper
     "foundit": "data_daemon~foundit-jobs-scraper",      # https://apify.com/data_daemon/foundit-jobs-scraper
     "instahyre": "data_daemon~instahyre-jobs-scraper",  # https://apify.com/data_daemon/instahyre-jobs-scraper
+    "apna": "data_daemon~apna-jobs-scraper",            # https://apify.com/data_daemon/apna-jobs-scraper
+    "shine": "data_daemon~shine-jobs-scraper",          # https://apify.com/data_daemon/shine-jobs-scraper
+    "unstop": "data_daemon~unstop-scraper",             # https://apify.com/data_daemon/unstop-scraper
 }
 COLUMNS = ["board", "postedAt", "title", "company", "locations", "experience", "salaryLpa", "applicants", "skills", "url", "id"]
 ROOT = Path(__file__).resolve().parent
@@ -72,7 +75,10 @@ def actor_input(search, defaults, feed_id):
         # Same price with or without the description there, and Instahyre's posting date and experience
         # come from the job page, so always ask for it.
         inp["includeDescription"] = True
-    if keywords in (["*"], ["all"]) or search.get("allJobs"):
+    every_job = keywords in (["*"], ["all"]) or search.get("allJobs")
+    if board in ("apna", "shine", "unstop"):
+        return newer_actor_input(board, search, inp, [] if every_job else keywords)
+    if every_job:
         inp["allJobs"] = True  # every job on the board in the posting window
     else:
         inp["queries"] = keywords
@@ -85,17 +91,60 @@ def actor_input(search, defaults, feed_id):
     return inp
 
 
+def newer_actor_input(board, search, inp, keywords):
+    """Apna, Shine and Unstop name their inputs differently; map the shared config keys onto them."""
+    days = inp.pop("postedWithinDays")
+    out = {k: inp[k] for k in ("onlyNewSinceLastRun", "stateName", "includeDescription")}
+    out["searchTerms"] = keywords  # empty = the newest jobs (Apna, Shine) or every open listing (Unstop)
+    if board == "unstop":
+        out["opportunityTypes"] = search.get("types", ["jobs", "internships"])
+        out["maxResults"] = inp["maxJobs"]
+        out["postedWithinDays"] = days
+        if search.get("locations"):
+            out["locations"] = search["locations"]
+        return out
+    out["maxJobs"] = inp["maxJobs"]
+    if search.get("locations"):
+        out["cities"] = search["locations"]
+    if board == "shine":
+        out["postedWithinDays"] = days
+        if search.get("minExperience") is not None:
+            out["experienceYears"] = search["minExperience"]
+    else:  # Apna has fixed windows and a board-wide mode
+        out["postedWithin"] = "24h" if days <= 1 else "3d" if days <= 3 else "7d" if days <= 7 else "any"
+        if not keywords:
+            out["allJobs"] = True
+    return out
+
+
+def lakh_per_year(value, period):
+    """Salaries in lakh rupees per year, whatever unit the board uses (Apna and Unstop quote monthly pay)."""
+    per_year = {"monthly": 12, "month": 12, "yearly": 1, "year": 1, "annually": 1}.get(str(period).lower())
+    if value is None or per_year is None:  # unknown unit (lump sum, weekly...): leave the cell empty
+        return None
+    return round(value * per_year / 100000, 1)
+
+
 def normalize(board, job):
-    company = job.get("company") or {}
+    company = job.get("company") or job.get("organization") or {}
+    if isinstance(company, str):
+        company = {"name": company}
     lo, hi = job.get("experienceMinYears"), job.get("experienceMaxYears")
     smin, smax = job.get("salaryMinLpa"), job.get("salaryMaxLpa")
+    if smin is None and job.get("salaryMin") is not None:
+        smin, smax = (lakh_per_year(job.get(k), job.get("salaryPeriod")) for k in ("salaryMin", "salaryMax"))
+    places = job.get("locations") or ([job["city"]] if job.get("city") else [])
+    places = [x.get("city") or x.get("state") or "" if isinstance(x, dict) else str(x) for x in places]  # Unstop: objects
+    if not places and job.get("workplaceType"):
+        places = [str(job["workplaceType"])]
     return {
         "board": board,
         "postedAt": (job.get("postedAt") or "")[:10],
         "title": job.get("title") or "",
         "company": company.get("name") or ("(confidential)" if company.get("confidential") else ""),
-        "locations": ", ".join(job.get("locations") or []),
-        "experience": f"{lo}-{hi} yrs" if lo is not None and hi is not None else "",
+        "locations": ", ".join(places),
+        # Apna stores 31 as the maximum when the employer set only a minimum.
+        "experience": f"{lo}+ yrs" if lo is not None and hi == 31 else f"{lo}-{hi} yrs" if lo is not None and hi is not None else "",
         "salaryLpa": f"{smin}-{smax}" if smin is not None and smax is not None else "",
         "applicants": job.get("applicants") if job.get("applicants") is not None else "",
         "skills": ", ".join((job.get("skills") or [])[:8]),
@@ -192,7 +241,7 @@ def main():
         try:
             items, status = run_actor(ACTORS[board], inp, token, cfg.get("maxCostPerSearchUsd", 0.5))
             rows += [normalize(board, j) for j in items]
-            print(f"{board} {inp.get('queries') or 'all jobs'}: {len(items)} new | {status}")
+            print(f"{board} {inp.get('queries') or inp.get('searchTerms') or 'all jobs'}: {len(items)} new | {status}")
         except (urllib.error.URLError, RuntimeError) as err:
             failures.append(f"{board}: {err}")
             print("FAILED", board, err, file=sys.stderr)
